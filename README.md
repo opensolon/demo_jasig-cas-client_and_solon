@@ -3,6 +3,14 @@
 * https://blog.csdn.net/qq_35144624/article/details/130928116
 
 
+```
+认证流程：
+1、前端请求 http://localhost:8443/cas/login?service=http%3A%2F%2Flocalhost%3A8034%2Fapi%2Fadmin%2Fauth 跳转单点登录  
+2、登录成功回调 http://localhost:8081/admin/auth 接口，即 service 指定的接口地址，携带 ticket 票据及用户信息，重定向到应用系统首页（http://localhost:8081）      
+
+退出登录：https://localhost:8443/cas/loginOption?originalUrl=http%3A%2F%2Flocalhost%3A8034%2Fapi%2Fadmin%2Fauth  
+```
+
 
 ### 1、引入依赖
 
@@ -45,7 +53,7 @@ cas:
 
 ```
 
-### 3、添加 Servlet 适配
+### 3、构建 Jasig-CAS 初始化配置器
 
 ```java
 
