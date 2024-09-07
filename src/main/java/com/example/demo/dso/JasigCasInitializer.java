@@ -1,53 +1,15 @@
-本示例参考了网上资料：
+package com.example.demo.dso;
 
-* https://blog.csdn.net/qq_35144624/article/details/130928116
+import org.jasig.cas.client.util.AssertionThreadLocalFilter;
+import org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter;
+import org.noear.solon.annotation.Configuration;
+import org.noear.solon.annotation.Inject;
 
-
-
-### 1、引入依赖
-
-```xml
-<dependencies>
-    <!-- 支持 servlet -->
-    <dependency>
-        <groupId>org.noear</groupId>
-        <artifactId>solon-boot-jetty</artifactId>
-    </dependency>
-
-    <dependency>
-        <groupId>org.jasig.cas.client</groupId>
-        <artifactId>cas-client-core</artifactId>
-        <version>3.6.4</version>
-    </dependency>
-</dependencies>
-```
-
-### 2、添加应用配置
-
-```yaml
-server:
-  port: 8081
-  contextPath: /api #可选
-
-cas:
-  #CAS服务端地址
-  cas-server-url-prefix: https://localhost:8443/cas
-  #CAS服务端登录地址
-  cas-server-login-Url: ${cas.cas-server-url-prefix}/login
-  #应用系统地址
-  server-name: http://localhost:8081
-  #受保护的url前缀
-  authentication-url-patterns: /admin/*
-  #认证成功重定向地址
-  redirect-url-success: ${cas.server-name}/#/Index
-  #注销登录重定向地址，service=http://localhost:8034/api/admin/auth 是API服务认证接口的地址
-  redirect-url-logout: ${cas.cas-server-url-prefix}/logout?service=http%3A%2F%2Flocalhost%3A8034%2Fapi%2Fadmin%2Fauth
-
-```
-
-### 3、添加 Servlet 适配
-
-```java
+import javax.servlet.FilterRegistration;
+import javax.servlet.ServletContainerInitializer;
+import javax.servlet.ServletException;
+import javax.servlet.ServletContext;
+import java.util.Set;
 
 @Configuration
 public class JasigCasInitializer implements ServletContainerInitializer {
@@ -111,59 +73,3 @@ public class JasigCasInitializer implements ServletContainerInitializer {
     }
 
 }
-```
-
-### 4、添加登录与退出集成代码
-
-
-```java
-
-@Controller
-@Mapping("/admin/auth")
-@Slf4j
-public class AdminAuthController {
-    @Inject("${cas.redirect-url-success}")
-    private String successRedirectUrl;
-    @Inject("${cas.redirect-url-logout}")
-    private String logoutRedirectUrl;
-
-
-    /**
-     * 登录认证
-     */
-    @Mapping("/auth")
-    public void auth(String redirectUrl, Context ctx) throws Exception {
-        log.info("登录认证");
-        Assertion assertion = ctx.session("_const_cas_assertion_", Assertion.class);
-
-        String userId = assertion.getPrincipal().getName();
-        log.info("sessionId：{}", ctx.sessionId());
-        log.info("userId：{}", userId);
-
-        Collection<String> headerNames = ctx.headerNames();
-        log.info("headerNames：{}", headerNames);
-
-        redirectUrl = null != redirectUrl && !redirectUrl.equals("") ?
-                redirectUrl : successRedirectUrl;
-        log.info("redirectUrl：{}", redirectUrl);
-    }
-
-    /**
-     * 退出登录
-     */
-    @Mapping("/logout")
-    public void logout(Context ctx) throws Exception {
-        try {
-            log.info("退出登录");
-            log.info("sessionId：{}", ctx.sessionId());
-            log.info("logoutRedirectUrl：{}", logoutRedirectUrl);
-
-            ctx.sessionState().sessionReset();
-            ctx.headerSet("Content-type", "text/html;charset=UTF-8");
-            ctx.redirect(logoutRedirectUrl);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-}
-```
