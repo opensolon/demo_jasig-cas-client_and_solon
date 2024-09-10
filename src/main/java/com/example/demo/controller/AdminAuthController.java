@@ -49,7 +49,7 @@ public class AdminAuthController {
             log.info("sessionId：{}", ctx.sessionId());
             log.info("logoutRedirectUrl：{}", logoutRedirectUrl);
 
-            ctx.sessionState().sessionReset();
+            ctx.sessionReset();
             ctx.headerSet("Content-type", "text/html;charset=UTF-8");
             ctx.redirect(logoutRedirectUrl);
         } catch (Exception e) {
